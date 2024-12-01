@@ -7,28 +7,11 @@ from scipy.sparse.csgraph import dijkstra
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from torch_geometric.nn import GINConv, GATConv, GCNConv
+from torch_geometric.nn import GINConv, GATConv
 
 import gensim
 import random
 
-class GCN(torch.nn.Module):
-    def __init__(self, m):
-        super(GCN, self).__init__()
-        self.conv1 = GCNConv(m+2, 128)
-        self.conv2 = GCNConv(128, 128)
-        self.conv3 = GCNConv(128, 2)
-        
-    def forward(self, data):
-        x, edge_index = data.x, data.edge_index
-        x = self.conv1(x, edge_index)
-        x = F.leaky_relu(x)
-        x = F.dropout(x, training=self.training)
-        x = self.conv2(x, edge_index)
-        x = F.leaky_relu(x)
-        x = F.dropout(x, training=self.training)
-        x = self.conv3(x, edge_index)
-        return x
 
 
 class Net(nn.Module):
@@ -118,9 +101,8 @@ class GAT(torch.nn.Module):
         return x
 
 
-def moon(n, noise):
-    # m = n * noise
-    m = int(n*noise)
+def moon(n):
+    m = int(n / 2)
     t = np.pi * np.random.rand(2 * m, 1)
     x = 6 * np.cos(t)
     y = 6 * np.sin(t)
@@ -193,7 +175,6 @@ def dG(A, B):
     return ((AR - B) ** 2).sum(1).mean()
 
 def deepwalk(graph, walk_length = 60, num_walks = 200, dim = 32):
-    # 生成随机游走序列
     walks = []
     for _ in range(num_walks):
         node = random.choice(list(graph.nodes))
@@ -205,7 +186,6 @@ def deepwalk(graph, walk_length = 60, num_walks = 200, dim = 32):
             node = next_node
         walks.append(walk)
 
-    # 使用 gensim 的 Word2Vec 训练嵌入向量
     sentences = [list(map(str, walk)) for walk in walks]
     # for walk in walks:
     #     print(walk)
